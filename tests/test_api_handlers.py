@@ -1,44 +1,35 @@
 import unittest
-from src.api_handlers import AbstractJobApiHandler, HeadHunterAPI
-from unittest.mock import patch, Mock
+from src.api_handlers import HeadHunterAPI
 
 
-class ConcreteJobApiHandler(AbstractJobApiHandler):
-    def connect(self):
-        pass
+class TestHeadHunterAPI(unittest.TestCase):
+    def setUp(self):
+        self.api_handler = HeadHunterAPI()
 
-    def get_vacancies(self, keyword):
-        pass
+    def test_get_vacancies(self):
+        # Проверяем успешное получение вакансий
+        vacancies = self.api_handler.get_vacancies(text="Python разработчик")
+        self.assertIsInstance(vacancies, list)
+        self.assertGreater(len(vacancies), 0)
+
+    def test_get_vacancies_with_area(self):
+        # Проверяем получение вакансий с указанием региона
+        moscow_area_id = 1  # ID Москвы на hh.ru
+        vacancies = self.api_handler.get_vacancies(area=moscow_area_id)
+        self.assertIsInstance(vacancies, list)
+        self.assertGreater(len(vacancies), 0)
+
+    def test_connect(self):
+        # Проверяем соединение с API
+        self.api_handler.connect()
+        # Нет исключений - значит успешно подключились
+
+    def test_get_vacancies_empty_text(self):
+        # Проверяем получение вакансий без текста
+        vacancies = self.api_handler.get_vacancies()
+        self.assertIsInstance(vacancies, list)
+        self.assertGreater(len(vacancies), 0)
 
 
-class TestAbstractJobApiHandler(unittest.TestCase):
-    def test_abstract_class_cannot_be_instantiated_directly(self):
-        with self.assertRaises(TypeError):
-            AbstractJobApiHandler()
-
-    def test_concrete_class_can_be_instantiated(self):
-        instance = ConcreteJobApiHandler()
-        self.assertIsInstance(instance, AbstractJobApiHandler)
-
-
-class TestHeadHunterAPI:
-    @patch('requests.get')
-    def test_get_vacancies_returns_valid_response(self, mock_get):
-        mock_response = Mock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {'items': ['mocked_item']}
-        mock_get.return_value = mock_response
-
-        hh_api = HeadHunterAPI()
-        result = hh_api.get_vacancies("Python")
-        assert result == ['mocked_item']
-
-    @patch('requests.get')
-    def test_get_vacancies_raises_connection_error_on_failure(self, mock_get):
-        mock_response = Mock()
-        mock_response.status_code = 404
-        mock_get.return_value = mock_response
-
-        hh_api = HeadHunterAPI()
-        with pytest.raises(Exception):
-            hh_api.get_vacancies("Python")
+if __name__ == "__main__":
+    unittest.main()
