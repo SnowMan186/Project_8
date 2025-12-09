@@ -7,7 +7,7 @@ class TestJSONSaver(unittest.TestCase):
     def setUp(self):
         self.saver = JSONSaver()
         self.test_file_name = "test_vacancies.json"
-        self.saver._filename = self.test_file_name
+        self.saver._JSONSaver__filename = self.test_file_name
         if os.path.exists(self.test_file_name):
             os.remove(self.test_file_name)
 

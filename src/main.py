@@ -5,6 +5,12 @@ from typing import Dict, Any, List
 
 
 def fetch_and_save_vacancies(keyword: str):
+    """
+    Загружает вакансии с hh.ru и сохраняет их в файл.
+
+    Args:
+        keyword: Ключевое слово для поиска вакансий
+    """
     hh_api = HeadHunterAPI()
     raw_vacancies = hh_api.get_vacancies(keyword)
 
@@ -12,7 +18,7 @@ def fetch_and_save_vacancies(keyword: str):
         Vacancy(
             item["name"],
             item["alternate_url"],
-            str(item.get("salary", {}).get("to")),
+            str(item.get("salary", {}).get("to", "0")),
             item["snippet"]["requirement"],
         )
         for item in raw_vacancies
@@ -24,6 +30,12 @@ def fetch_and_save_vacancies(keyword: str):
 
 
 def show_top_vacancies(n: int):
+    """
+    Показывает топ-N вакансий по зарплате.
+
+    Args:
+        n: Количество вакансий для отображения
+    """
     saver = JSONSaver()
     data = saver.get_vacancies()
     sorted_data = sorted(
@@ -38,9 +50,17 @@ def show_top_vacancies(n: int):
         )
 
 
-def filter_vacancies(filters: Dict[str, Any]) -> List[Dict]:
+def filter_vacancies(filters: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """
+    Возвращает список вакансий, соответствующих фильтрам.
+
+    Args:
+        filters: Словарь с параметрами фильтрации
+    Returns:
+        Список вакансий
+    """
     saver = JSONSaver()
-    return saver.get_vacancies(filters=filters)
+    return saver.get_vacancies(filters)
 
 
 def main():
