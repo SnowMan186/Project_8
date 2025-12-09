@@ -1,58 +1,45 @@
 from abc import ABC, abstractmethod
 import requests
+from typing import Dict, Any, List, Optional
 
 
-class AbstractJobApiHandler(ABC):
-    """Абстрактный класс для работы с API сайтов вакансий."""
-
+class AbstractJobApi(ABC):
     @abstractmethod
-    def connect(self):
+    def _connect(self) -> requests.Response:
+        """Проверяет доступность API."""
         pass
 
     @abstractmethod
-    def get_vacancies(self, keyword):
+    def get_vacancies(
+        self, text: str = "", area: Optional[int] = None
+    ) -> List[Dict[str, Any]]:
+        """Получает вакансии по указанному ключевому слову и области."""
         pass
 
 
-class HeadHunterAPI(AbstractJobApiHandler):
-    """Конкретная реализация для работы с hh.ru"""
+class HeadHunterAPI(AbstractJobApi):
+    _BASE_URL = "https://api.hh.ru/"
 
-    def __init__(self, base_url='https://api.hh.ru'):
-        self.base_url = base_url  # Базовый адрес API HeadHunter
-        self.vacancies = []  # Список для хранения вакансий
+    def _connect(self) -> requests.Response:
+        """Подключается к API и проверяет доступность."""
+        response = requests.get(self._BASE_URL)
+        if response.status_code != 200:
+            raise ConnectionError(
+                f"Не удалось подключиться к API. Код: {response.status_code}"
+            )
+        return response
 
-    def _connect(self):
-        pass  # Реализация заглушки, подтверждающая успешное подключение
-
-    def get_vacancies(self, text='', area=None, per_page=100):
-        """
-        Отправляет запрос к API HeadHunter и получает вакансии.
-        :param text: Текстовый запрос (должность, специализацию)
-        :param area: ID региона (можно оставить None, если не важен регион)
-        :param per_page: Кол-во вакансий на страницу (до 100)
-        :return: Возвращает список вакансий
-        """
-        endpoint = '/vacancies'
-        params = {
-            'text': text,  # Ключевое слово для поиска (например, должность)
-            'area': area,  # Регион поиска (если нужен)
-            'per_page': per_page  # Максимальное количество вакансий на странице
-        }
-
-        response = requests.get(self.base_url + endpoint, params=params)
+    def get_vacancies(
+        self, text: str = "", area: Optional[int] = None
+    ) -> List[Dict[str, Any]]:
+        """Получает вакансии по указанному ключевому слову и области."""
+        self._connect()  # Проверяем подключение
+        endpoint = "/vacancies"
+        params = {"text": text}
+        if area:
+            params["area"] = area
+        response = requests.get(self._BASE_URL + endpoint, params=params)
         if response.status_code == 200:
-            data = response.json()
-            self.vacancies = data['items']  # Берем список вакансий
-            return self.vacancies
+            return response.json()["items"]
         else:
-            print(f"Ошибка при запросе к API: {response.status_code}")
             return []
-
-    def save_to_json(self, filename='vacancies.json'):
-        """
-        Сохраняет собранные вакансии в JSON-файл.
-        :param filename: Имя файла для сохранения
-        """
-        with open(filename, 'w', encoding='utf-8') as file:
-            json.dump(self.vacancies, file, ensure_ascii=False, indent=4)
-        print(f"Вакансии сохранены в файл {filename}")
